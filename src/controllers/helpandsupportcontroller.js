@@ -1,4 +1,4 @@
-import { helpsupportApi } from "../services/helpandsupportService.js"
+import { helpsupportApi, IssueMAster , subissueMaster } from "../services/helpandsupportService.js"
 
 const helpandsupportservice = async (req, res) => {
       try {
@@ -7,6 +7,20 @@ const helpandsupportservice = async (req, res) => {
         res.status(500).json({ Error: error.message })
       }
     }
-    
 
-export {helpandsupportservice}
+const IssueMAsterService = async(req,res)=>{
+ try {
+   await IssueMAster(req,res)
+ } catch (error) {
+  res.status(500).json({ Error: error.message })
+ }
+}
+const subIssueMAsterService = async(req,res)=>{
+ try {
+   await subissueMaster(req,res)
+ } catch (error) {
+  res.status(500).json({ Error: error.message })
+ }
+}
+
+export {helpandsupportservice,IssueMAsterService,subIssueMAsterService}

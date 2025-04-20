@@ -1,0 +1,78 @@
+// import AWS from 'aws-sdk'
+// import multer from 'multer'
+// import multerS3 from 'multer-s3';
+// import "dotenv/config"
+
+// // AWS Config
+// const s3 = new AWS.S3({
+//   accessKeyId: process.env.AWS_ACCESS_KEY,
+//   secretAccessKey: process.env.AWS_SECRET_KEY,
+//   region: process.env.AWS_REGION,
+// });
+
+// // Multer-S3 storage
+// const upload = multer({
+//   storage: multerS3({
+//     s3,
+//     bucket: process.env.S3_BUCKET_NAME,
+//     acl: 'public-read',
+//     key: (req, file, cb) => {
+//       const filename = `${Date.now()}-${file.originalname}`;
+//       cb(null, filename);
+//     },
+//   }),
+// });
+
+// export default upload;
+// src/middlewares/s3Upload.middleware.js
+import { S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import multer from "multer";
+import dotenv from "dotenv";
+import path from "path";
+import fs from "fs/promises";
+
+dotenv.config();
+
+// AWS S3 Client (v3)
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
+  },
+});
+
+// Multer local config (temporary storage before upload)
+const storage = multer.diskStorage({
+  destination: "uploads/", // local temp folder
+  filename: (req, file, cb) => {
+    const filename = `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`;
+    cb(null, filename);    
+  },
+});
+
+const upload = multer({ storage });
+
+const uploadToS3 = async (file) => {
+  const fileStream = await fs.readFile(file.path);
+
+  const upload = new Upload({
+    client: s3Client,
+    params: {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: file.filename,
+      Body: fileStream,
+      // ACL: "public-read",
+    },
+  });
+
+  const result = await upload.done();
+
+  // Optional: delete the local file
+  await fs.unlink(file.path);
+
+  return result.Location;
+};
+
+export { upload, uploadToS3 };

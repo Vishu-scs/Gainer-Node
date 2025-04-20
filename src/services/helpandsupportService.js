@@ -1,83 +1,87 @@
 import 'dotenv/config'
 import { transporter } from '../utils/helpandsupportservice.js'
 import {getPool} from '../db/db.js'
-
-const helpsupportApi = async(req,res)=>{
-    try {
-      const pool = await getPool()
-      const {issue, desc , userid , locationid , service} = req.body
-      if(!issue || !desc || !userid || !locationid ||!service){
-        return res.status(400).json({message:`All fields are Required`})
-      }
-      try {
-        const query = `INSERT into HelpSupportGainer(Issue,Description,UserID,LocationID,Service)
-                      values ('${issue}','${desc}' , ${userid} , ${locationid},${service})`
-        await pool.request().query(query)
-      } catch (error) {
-         return res.status(500).json({Error:error.message})
-      }
-
-      const query = `select CONCAT(vcFirstName , ' ',vcLastName) as Name , vcEmail from z_scope..adminmaster_gen where bintId_Pk = ${userid} `
-    const result =  await pool.request().query(query)
-    const username = result.recordset[0].Name;
-    const useremail = result.recordset[0].vcEmail
-
-    const query2 = `select brand , dealer , location from z_scope..locationinfo where locationid = ${locationid}`
-    const locationResult  = await pool.request().query(query2) 
-     const Brand = locationResult.recordset[0].brand;
-     const Dealer = locationResult.recordset[0].dealer;
-     const Location = locationResult.recordset[0].location;
-
-     const query3 = `select Top 1 hsg.TicketID ,hsg.Addedon ,sm.Service   from z_scope..HelpSupportGainer hsg
-                    join z_scope..ServiceMaster sm on sm.ServiceID = hsg.service 
-                    where userid = ${userid} and locationid = ${locationid} order by addedon desc`
-      const TicketResult = await pool.request().query(query3)  
-      const TicketID = TicketResult.recordset[0].TicketID
-      const Service = TicketResult.recordset[0].Service
-      let Datetime = TicketResult.recordset[0].Addedon
-
-      const { formattedDate, formattedDateTime } = formatUTCDateTime(Datetime);      
-
-      const mailOptions = {
-          from: process.env.EMAILID,
-          to: 'vishu.bansal@sparecare.in,scope@sparecare.in,gainer.alerts@sparecare.in',useremail,
-          subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
-html: `
-    <p>Hi <strong>${username}</strong>,</p>
-
-    <p>Thank you for contacting us. This is an automated response confirming the receipt of your ticket. One of our agents will get back to you as soon as possible.</p>
-
-    <p><strong>Ticket Details:</strong></p>
-    <ul>
-      <li><strong>Ticket ID:</strong> #${TicketID}</li>
-      <li><strong>Ticket Date:</strong> ${formattedDateTime}</li>
-      <li><strong>Service:</strong> ${Service}</li>
-      <li><strong>Brand:</strong> ${Brand}</li>
-      <li><strong>Dealer:</strong> ${Dealer}</li>
-      <li><strong>Location:</strong> ${Location}</li>
-      <li><strong>Issue:</strong> ${issue}</li>
-      <li><strong>Description:</strong> ${desc}</li>
-      <li><strong>Status:</strong> Being Processed</li>
-      <li><strong>Priority:</strong> High</li>
-    </ul>
-
-    <p>Regards,<br/>Team SpareCare</p>`
-        };
-    
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error('Error sending email:', error);
-            return res.status(500).json({ Error: 'Failed to send Mail.' });
-          }          
-          res.status(200).json({ message: 'Mail sent successfully.'});
-        });
-    } catch (error) {
-      console.log(error.message);
+import { uploadToS3 } from '../middlewares/multer.aws-s3.middleware.js';
+// const helpsupportApi = async(req,res)=>{
+//     try {
+//       const pool = await getPool()
+//       const {issueid,subissueid, desc , userid , locationid} = req.body
       
-      res.status(500).json({Error:error.message})
-    }
+//       if(!issueid || !desc || !userid || !locationid ){
+//         return res.status(400).json({message:`All fields are Required`})
+//       }
+//       try {
+//         const query = `INSERT into HelpSupportGainer(Issueid,SubIssueid,Description,UserID,LocationID)
+//                       values (${issueid},${subissueid},'${desc}' , ${userid} , ${locationid})`
+//         await pool.request().query(query)
+        
+//       } catch (error) {
+//          return res.status(500).json({Error:error.message})
+//       }
+
+//       const query = `select CONCAT(vcFirstName , ' ',vcLastName) as Name , vcEmail from z_scope..adminmaster_gen where bintId_Pk = ${userid} `
+//     const result =  await pool.request().query(query)
+//     const username = result.recordset[0].Name;
+//     const useremail = result.recordset[0].vcEmail
+
+//     const query2 = `select brand , dealer , location from z_scope..locationinfo where locationid = ${locationid}`
+//     const locationResult  = await pool.request().query(query2) 
+//      const Brand = locationResult.recordset[0].brand;
+//      const Dealer = locationResult.recordset[0].dealer;
+//      const Location = locationResult.recordset[0].location;
+
+//      const query3 = `select Top 1 hsg.TicketID ,hsg.Addedon ,sm.Service , im.issue  from z_scope..HelpSupportGainer hsg
+//                     join z_scope..IssuesMaster im on im.IssueID = hsg.Issueid
+//                     join z_scope..ServiceMaster sm on sm.ServiceID = im.VerticalID 
+//                     where userid = ${userid} and locationid = ${locationid} order by addedon desc`
+//       const TicketResult = await pool.request().query(query3)  
+//       const TicketID = TicketResult.recordset[0].TicketID
+//       const Service = TicketResult.recordset[0].Service
+//       const issue = TicketResult.recordset[0].issue
+//       let Datetime = TicketResult.recordset[0].Addedon
+
+//       const { formattedDate, formattedDateTime } = formatUTCDateTime(Datetime);      
+
+//       const mailOptions = {
+//           from: process.env.EMAILID,
+//           to: 'vishu.bansal@sparecare.in,scope@sparecare.in,gainer.alerts@sparecare.in',useremail,
+//           subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
+// html: `
+//     <p>Hi <strong>${username}</strong>,</p>
+
+//     <p>Thank you for contacting us. This is an automated response confirming the receipt of your ticket. One of our agents will get back to you as soon as possible.</p>
+
+//     <p><strong>Ticket Details:</strong></p>
+//     <ul>
+//       <li><strong>Ticket ID:</strong> #${TicketID}</li>
+//       <li><strong>Ticket Date:</strong> ${formattedDateTime}</li>
+//       <li><strong>Service:</strong> ${Service}</li>
+//       <li><strong>Brand:</strong> ${Brand}</li>
+//       <li><strong>Dealer:</strong> ${Dealer}</li>
+//       <li><strong>Location:</strong> ${Location}</li>
+//       <li><strong>Issue:</strong> ${issue}</li>
+//       <li><strong>Description:</strong> ${desc}</li>
+//       <li><strong>Status:</strong> Being Processed</li>
+//       <li><strong>Priority:</strong> High</li>
+//     </ul>
+
+//     <p>Regards,<br/>Team SpareCare</p>`
+//         };
     
-}
+//         transporter.sendMail(mailOptions, (error, info) => {
+//           if (error) {
+//             console.error('Error sending email:', error);
+//             return res.status(500).json({ Error: 'Failed to send Mail.' });
+//           }          
+//           res.status(200).json({ message: 'Mail sent successfully.'});
+//         });
+//     } catch (error) {
+//       console.log(error.message);
+      
+//       res.status(500).json({Error:error.message})
+//     }
+    
+// }
 // function formatUTCDateTime(isoString) {
 //   const date = new Date(isoString);
 
@@ -96,6 +100,120 @@ html: `
 
 //   return { formattedDate, formattedDateTime };
 // }
+const helpsupportApi = async (req, res) => {
+  const pool = await getPool();
+  const transaction = await pool.transaction();
+
+    let photoUrl = null;
+
+    if (req.file) {
+      const uploadResult = await uploadToS3(req.file);
+      photoUrl = uploadResult; // this is the public S3 URL
+    }
+
+    console.log("Uploaded image URL:", photoUrl);
+
+  const { issueid, subissueid, desc, userid, locationid } = req.body;
+
+  if (!issueid || !desc || !userid || !locationid) {
+    return res.status(400).json({ message: 'All fields are Required' });
+  }
+
+  try {
+    await transaction.begin(); // start transaction
+    const request = transaction.request();
+
+    // 1. Insert into HelpSupportGainer
+    const insertQuery = `
+      INSERT INTO HelpSupportGainer (Issueid, SubIssueid, Description, UserID, LocationID)
+      VALUES (${issueid}, ${subissueid}, '${desc}', ${userid}, ${locationid})
+    `;
+    await request.query(insertQuery);
+
+    // 2. Get user info
+    const userQuery = `
+      SELECT CONCAT(vcFirstName, ' ', vcLastName) AS Name, vcEmail
+      FROM z_scope..adminmaster_gen
+      WHERE bintId_Pk = ${userid}
+    `;
+    const userResult = await request.query(userQuery);
+    const username = userResult.recordset[0].Name;
+    const useremail = userResult.recordset[0].vcEmail;
+
+    // 3. Get location info
+    const locationQuery = `
+      SELECT brand, dealer, location
+      FROM z_scope..locationinfo
+      WHERE locationid = ${locationid}
+    `;
+    const locationResult = await request.query(locationQuery);
+    const Brand = locationResult.recordset[0].brand;
+    const Dealer = locationResult.recordset[0].dealer;
+    const Location = locationResult.recordset[0].location;
+
+    // 4. Get latest ticket info
+    const ticketQuery = `
+      SELECT TOP 1 hsg.TicketID, hsg.Addedon, sm.Service, im.issue , sim.subissue
+      FROM z_scope..HelpSupportGainer hsg
+      JOIN z_scope..IssuesMaster im ON im.IssueID = hsg.Issueid
+      JOIN z_scope..subIssuemaster sim on sim.subissueid = hsg.SubIssueid
+      JOIN z_scope..ServiceMaster sm ON sm.ServiceID = im.VerticalID
+      WHERE userid = ${userid} AND locationid = ${locationid}
+      ORDER BY Addedon DESC
+    `;
+    const ticketResult = await request.query(ticketQuery);
+    const TicketID = ticketResult.recordset[0].TicketID;
+    const Service = ticketResult.recordset[0].Service;
+    const issue = ticketResult.recordset[0].issue;
+    const subissue = ticketResult.recordset[0].subissue;
+    let Datetime = ticketResult.recordset[0].Addedon;
+
+    const { formattedDate, formattedDateTime } = formatUTCDateTime(Datetime);
+
+    // 5. Send email (outside transaction but rollback if it fails)
+    const mailOptions = {
+      from: process.env.EMAILID,
+      to: 'vishu.bansal@sparecare.in,scope@sparecare.in,gainer.alerts@sparecare.in,' + useremail,
+      subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
+      html: `
+        <p>Hi <strong>${username}</strong>,</p>
+        <p>Thank you for contacting us. This is an automated response confirming the receipt of your ticket. One of our agents will get back to you as soon as possible.</p>
+        <p><strong>Ticket Details:</strong></p>
+        <ul>
+          <li><strong>Ticket ID:</strong> #${TicketID}</li>
+          <li><strong>Ticket Date:</strong> ${formattedDateTime}</li>
+          <li><strong>Service:</strong> ${Service}</li>
+          <li><strong>Brand:</strong> ${Brand}</li>
+          <li><strong>Dealer:</strong> ${Dealer}</li>
+          <li><strong>Location:</strong> ${Location}</li>
+          <li><strong>Issue:</strong> ${issue}</li>
+          <li><strong>SubIssue:</strong> ${subissue}</li>
+          <li><strong>Description:</strong> ${desc}</li>
+          <li><strong>Status:</strong> Being Processed</li>
+          <li><strong>Priority:</strong> High</li>
+          ${photoUrl ? `<p><strong>Photo:</strong> <a href="${photoUrl}">View Image</a></p>` : ''}
+
+        </ul>
+        <p>Regards,<br/>Team SpareCare</p>`
+    };
+
+    transporter.sendMail(mailOptions, async (error, info) => {
+      if (error) {
+        await transaction.rollback(); // rollback everything if mail fails
+        console.error('Error sending email:', error);
+        return res.status(500).json({ Error: 'Failed to send mail. Transaction rolled back.' });
+      }
+
+      await transaction.commit(); // commit only if everything succeeded
+      res.status(200).json({ message: 'Ticket created and mail sent successfully.' });
+    });
+  } catch (error) {
+    await transaction.rollback(); // rollback on any other error
+    console.error('Transaction error:', error);
+    res.status(500).json({ Error: error.message });
+  }
+};
+
 function formatUTCDateTime(isoString) {
   const date = new Date(isoString);
 
@@ -119,9 +237,23 @@ function formatUTCDateTime(isoString) {
   return { formattedDate, formattedDateTime };
 }
 
+const IssueMAster = async(req,res)=>{
+  const pool = await getPool()
+  const query = `select IssueID , Issue from IssuesMaster where status = 1`
 
+  const result = await pool.request().query(query)
+  res.status(200).json({Data:result.recordset})
+}
 
+const subissueMaster = async(req,res)=>{
+  const pool = await getPool()
+  const {issueid} = req.body
+  const query = `select subissueid , subissue from subissuemaster where issueid = ${issueid}`
 
-export {helpsupportApi}
+  const result = await pool.request().query(query)
+  res.status(200).json({Data:result.recordset})
+}
+
+export {helpsupportApi,IssueMAster,subissueMaster}
 
 
