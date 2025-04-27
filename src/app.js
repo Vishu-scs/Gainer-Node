@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import  helpandsupportservice  from './routes/helpandsupportRoute.js'
+import  helpandsupportservice  from './routes/helpandsupportroute.js'
 
 const app = express()
 app.use(cors())

@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { transporter } from '../utils/helpandsupportservice.js'
 import {getPool} from '../db/db.js'
 import { uploadToS3 } from '../middlewares/multer.aws-s3.middleware.js';
+import sql from 'mssql'
 // const helpsupportApi = async(req,res)=>{
 //     try {
 //       const pool = await getPool()
@@ -104,17 +105,22 @@ const helpsupportApi = async (req, res) => {
   const pool = await getPool();
   const transaction = await pool.transaction();
 
-    let photoUrl = null;
+     const files = req.files; // array of uploaded files
+    const imageUrls = [];
 
-    if (req.file) {
-      const uploadResult = await uploadToS3(req.file);
-      photoUrl = uploadResult; // this is the public S3 URL
+    if (files && files.length > 0) {
+      for (const file of files) {
+        const url = await uploadToS3(file);
+        imageUrls.push(url);
+      }
     }
 
-    console.log("Uploaded image URL:", photoUrl);
+    // You can now use imageUrls[] in your DB insert or email content
+    // console.log("Uploaded image URLs:", imageUrls);
 
   const { issueid, subissueid, desc, userid, locationid } = req.body;
-
+    
+    
   if (!issueid || !desc || !userid || !locationid) {
     return res.status(400).json({ message: 'All fields are Required' });
   }
@@ -124,11 +130,23 @@ const helpsupportApi = async (req, res) => {
     const request = transaction.request();
 
     // 1. Insert into HelpSupportGainer
+    // const insertQuery = `
+    //   INSERT INTO HelpSupportGainer (Issueid, SubIssueid, Description, UserID, LocationID, imageUrl)
+    //   VALUES (${issueid}, ${subissueid}, '${desc}', ${userid}, ${locationid},'${imageUrls}')`;
+    // await request.query(insertQuery);
     const insertQuery = `
-      INSERT INTO HelpSupportGainer (Issueid, SubIssueid, Description, UserID, LocationID)
-      VALUES (${issueid}, ${subissueid}, '${desc}', ${userid}, ${locationid})
-    `;
-    await request.query(insertQuery);
+  INSERT INTO HelpSupportGainer (Issueid, SubIssueid, Description, UserID, LocationID, imageUrl)
+  VALUES (@issueid, @subissueid, @desc, @userid, @locationid, @imageUrls)
+`;
+
+request.input('issueid', sql.Int, parseInt(issueid));
+request.input('subissueid', sql.Int, subissueid && subissueid !== 'null' ? parseInt(subissueid) : null);
+request.input('desc', sql.VarChar, desc);
+request.input('userid', sql.Int, parseInt(userid));
+request.input('locationid', sql.Int, parseInt(locationid));
+request.input('imageUrls', sql.VarChar, imageUrls.join(', ')); // or JSON.stringify(imageUrls)
+
+await request.query(insertQuery);
 
     // 2. Get user info
     const userQuery = `
@@ -153,10 +171,10 @@ const helpsupportApi = async (req, res) => {
 
     // 4. Get latest ticket info
     const ticketQuery = `
-      SELECT TOP 1 hsg.TicketID, hsg.Addedon, sm.Service, im.issue , sim.subissue
+      SELECT TOP 1 hsg.TicketID, hsg.Addedon, sm.Service, im.issue , ISNULL(sim.subissue, 'NOT APPLICABLE') AS subissue
       FROM z_scope..HelpSupportGainer hsg
       JOIN z_scope..IssuesMaster im ON im.IssueID = hsg.Issueid
-      JOIN z_scope..subIssuemaster sim on sim.subissueid = hsg.SubIssueid
+      LEFT JOIN z_scope..subIssuemaster sim on sim.subissueid = hsg.SubIssueid
       JOIN z_scope..ServiceMaster sm ON sm.ServiceID = im.VerticalID
       WHERE userid = ${userid} AND locationid = ${locationid}
       ORDER BY Addedon DESC
@@ -169,11 +187,12 @@ const helpsupportApi = async (req, res) => {
     let Datetime = ticketResult.recordset[0].Addedon;
 
     const { formattedDate, formattedDateTime } = formatUTCDateTime(Datetime);
+console.log(TicketID);
 
     // 5. Send email (outside transaction but rollback if it fails)
     const mailOptions = {
       from: process.env.EMAILID,
-      to: 'vishu.bansal@sparecare.in,scope@sparecare.in,gainer.alerts@sparecare.in,' + useremail,
+      to: 'mushtakeemahmad11@gmail.com,'+ useremail,
       subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
       html: `
         <p>Hi <strong>${username}</strong>,</p>
@@ -191,8 +210,12 @@ const helpsupportApi = async (req, res) => {
           <li><strong>Description:</strong> ${desc}</li>
           <li><strong>Status:</strong> Being Processed</li>
           <li><strong>Priority:</strong> High</li>
-          ${photoUrl ? `<p><strong>Photo:</strong> <a href="${photoUrl}">View Image</a></p>` : ''}
-
+          ${imageUrls && imageUrls.length > 0 ? `
+            <p><strong>Photos:</strong></p>
+            <ul>
+              ${imageUrls.map(url => `<li><a href="${url}" target="_blank">View Image</a></li>`).join('')}
+            </ul>
+          ` : ''}
         </ul>
         <p>Regards,<br/>Team SpareCare</p>`
     };

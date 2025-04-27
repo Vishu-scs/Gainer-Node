@@ -29,7 +29,6 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import multer from "multer";
 import dotenv from "dotenv";
-import path from "path";
 import fs from "fs/promises";
 
 dotenv.config();
@@ -63,6 +62,7 @@ const uploadToS3 = async (file) => {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: file.filename,
       Body: fileStream,
+      ContentType: file.mimetype,
       // ACL: "public-read",
     },
   });
