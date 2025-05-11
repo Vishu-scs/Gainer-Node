@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { transporter } from '../utils/helpandsupportservice.js'
-import {getPool} from '../db/db.js'
+import {getPool1 , getPool2} from '../db/db.js'
 import { uploadToS3 } from '../middlewares/multer.aws-s3.middleware.js';
 import sql from 'mssql'
 // const helpsupportApi = async(req,res)=>{
@@ -102,7 +102,7 @@ import sql from 'mssql'
 //   return { formattedDate, formattedDateTime };
 // }
 const helpsupportApi = async (req, res) => {
-  const pool = await getPool();
+  const pool = await getPool1();
   const transaction = await pool.transaction();
 
      const files = req.files; // array of uploaded files
@@ -187,7 +187,7 @@ await request.query(insertQuery);
     let Datetime = ticketResult.recordset[0].Addedon;
 
     const { formattedDate, formattedDateTime } = formatUTCDateTime(Datetime);
-console.log(TicketID);
+// console.log(TicketID);
 
     // 5. Send email (outside transaction but rollback if it fails)
     const mailOptions = {
@@ -261,7 +261,7 @@ function formatUTCDateTime(isoString) {
 }
 
 const IssueMAster = async(req,res)=>{
-  const pool = await getPool()
+  const pool = await getPool1()
   const query = `select IssueID , Issue from IssuesMaster where status = 1`
 
   const result = await pool.request().query(query)
@@ -269,7 +269,7 @@ const IssueMAster = async(req,res)=>{
 }
 
 const subissueMaster = async(req,res)=>{
-  const pool = await getPool()
+  const pool = await getPool1()
   const {issueid} = req.body
   const query = `select subissueid , subissue from subissuemaster where issueid = ${issueid}`
 
