@@ -192,7 +192,8 @@ await request.query(insertQuery);
     // 5. Send email (outside transaction but rollback if it fails)
     const mailOptions = {
       from: process.env.EMAILID,
-      to: 'mushtakeemahmad11@gmail.com,'+ useremail,
+      to:  useremail,
+      cc: 'manish.sharma@sparecare.in',
       subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
       html: `
         <p>Hi <strong>${username}</strong>,</p>
