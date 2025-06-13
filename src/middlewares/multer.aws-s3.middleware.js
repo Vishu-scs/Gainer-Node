@@ -1,30 +1,3 @@
-// import AWS from 'aws-sdk'
-// import multer from 'multer'
-// import multerS3 from 'multer-s3';
-// import "dotenv/config"
-
-// // AWS Config
-// const s3 = new AWS.S3({
-//   accessKeyId: process.env.AWS_ACCESS_KEY,
-//   secretAccessKey: process.env.AWS_SECRET_KEY,
-//   region: process.env.AWS_REGION,
-// });
-
-// // Multer-S3 storage
-// const upload = multer({
-//   storage: multerS3({
-//     s3,
-//     bucket: process.env.S3_BUCKET_NAME,
-//     acl: 'public-read',
-//     key: (req, file, cb) => {
-//       const filename = `${Date.now()}-${file.originalname}`;
-//       cb(null, filename);
-//     },
-//   }),
-// });
-
-// export default upload;
-// src/middlewares/s3Upload.middleware.js
 import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import multer from "multer";

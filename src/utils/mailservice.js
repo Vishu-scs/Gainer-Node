@@ -1,0 +1,57 @@
+import nodemailer from "nodemailer"
+import 'dotenv/config'
+import path from 'path'
+// import { fileURLToPath } from 'url';
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+const transporter = nodemailer.createTransport({
+  service: 'gmail', 
+  auth: {
+    user: process.env.EMAILID,
+    pass: process.env.EMAILPASSWORD,
+  },
+});
+
+const tatacvBrandPoolMail = (date,url) => ({
+  from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
+  // to: 'manish.sharma@sparecare.in,hanish.khattar@sparecare.in',
+  to: 'vishu.bansal@sparecare.in',
+  cc: 'scope@sparecare.in',
+  subject: `Tata PCBU Brand Pool Stock for ${date}`,
+  html: `
+    <p>Hi Team</p>
+   <p>Kindly find below the <strong><a href="${url}" target="_blank">Link</a></strong> to download the latest Non Moving Pool Stock of Tata PCBU brand dealers in Gainer.</p>
+   <p>Regards,<br/>Team SpareCare</p>`
+});
+
+const helpandsupportMail = (useremail,TicketID,Service,issue,formattedDate,username,formattedDateTime,Brand,Dealer,Location,subissue,desc,imageUrls)=>({
+    from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
+      to:  useremail,
+      cc: 'manish.sharma@sparecare.in',
+      subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
+      html: `
+        <p>Hi <strong>${username}</strong>,</p>
+        <p>Thank you for contacting us. This is an automated response confirming the receipt of your ticket. One of our agents will get back to you as soon as possible.</p>
+        <p><strong>Ticket Details:</strong></p>
+        <ul>
+          <li><strong>Ticket ID:</strong> #${TicketID}</li>
+          <li><strong>Ticket Date:</strong> ${formattedDateTime}</li>
+          <li><strong>Service:</strong> ${Service}</li>
+          <li><strong>Brand:</strong> ${Brand}</li>
+          <li><strong>Dealer:</strong> ${Dealer}</li>
+          <li><strong>Location:</strong> ${Location}</li>
+          <li><strong>Issue:</strong> ${issue}</li>
+          <li><strong>SubIssue:</strong> ${subissue}</li>
+          <li><strong>Description:</strong> ${desc}</li>
+          <li><strong>Status:</strong> Being Processed</li>
+          <li><strong>Priority:</strong> High</li>
+          ${imageUrls && imageUrls.length > 0 ? `
+            <p><strong>Photos:</strong></p>
+            <ul>
+              ${imageUrls.map(url => `<li><a href="${url}" target="_blank">View Image</a></li>`).join('')}
+            </ul>
+          ` : ''}
+        </ul>
+        <p>Regards,<br/>Team SpareCare</p>`
+})
+export {transporter,tatacvBrandPoolMail,helpandsupportMail}

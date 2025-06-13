@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { transporter } from '../utils/helpandsupportservice.js'
+import { transporter , helpandsupportMail } from '../utils/mailservice.js'
 import {getPool1 , getPool2} from '../db/db.js'
 import { uploadToS3 } from '../middlewares/multer.aws-s3.middleware.js';
 import sql from 'mssql'
@@ -190,36 +190,37 @@ await request.query(insertQuery);
 // console.log(TicketID);
 
     // 5. Send email (outside transaction but rollback if it fails)
-    const mailOptions = {
-      from: process.env.EMAILID,
-      to:  useremail,
-      cc: 'manish.sharma@sparecare.in',
-      subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
-      html: `
-        <p>Hi <strong>${username}</strong>,</p>
-        <p>Thank you for contacting us. This is an automated response confirming the receipt of your ticket. One of our agents will get back to you as soon as possible.</p>
-        <p><strong>Ticket Details:</strong></p>
-        <ul>
-          <li><strong>Ticket ID:</strong> #${TicketID}</li>
-          <li><strong>Ticket Date:</strong> ${formattedDateTime}</li>
-          <li><strong>Service:</strong> ${Service}</li>
-          <li><strong>Brand:</strong> ${Brand}</li>
-          <li><strong>Dealer:</strong> ${Dealer}</li>
-          <li><strong>Location:</strong> ${Location}</li>
-          <li><strong>Issue:</strong> ${issue}</li>
-          <li><strong>SubIssue:</strong> ${subissue}</li>
-          <li><strong>Description:</strong> ${desc}</li>
-          <li><strong>Status:</strong> Being Processed</li>
-          <li><strong>Priority:</strong> High</li>
-          ${imageUrls && imageUrls.length > 0 ? `
-            <p><strong>Photos:</strong></p>
-            <ul>
-              ${imageUrls.map(url => `<li><a href="${url}" target="_blank">View Image</a></li>`).join('')}
-            </ul>
-          ` : ''}
-        </ul>
-        <p>Regards,<br/>Team SpareCare</p>`
-    };
+    const mailOptions = helpandsupportMail(useremail,TicketID,Service,issue,formattedDate,username,formattedDateTime,Brand,Dealer,Location,subissue,desc,imageUrls)
+    // const mailOptions = {
+    //   from: process.env.EMAILID,
+    //   to:  useremail,
+    //   cc: 'manish.sharma@sparecare.in',
+    //   subject: `[Ticket #${TicketID}]: ${Service}_${issue}_${formattedDate}`,
+    //   html: `
+    //     <p>Hi <strong>${username}</strong>,</p>
+    //     <p>Thank you for contacting us. This is an automated response confirming the receipt of your ticket. One of our agents will get back to you as soon as possible.</p>
+    //     <p><strong>Ticket Details:</strong></p>
+    //     <ul>
+    //       <li><strong>Ticket ID:</strong> #${TicketID}</li>
+    //       <li><strong>Ticket Date:</strong> ${formattedDateTime}</li>
+    //       <li><strong>Service:</strong> ${Service}</li>
+    //       <li><strong>Brand:</strong> ${Brand}</li>
+    //       <li><strong>Dealer:</strong> ${Dealer}</li>
+    //       <li><strong>Location:</strong> ${Location}</li>
+    //       <li><strong>Issue:</strong> ${issue}</li>
+    //       <li><strong>SubIssue:</strong> ${subissue}</li>
+    //       <li><strong>Description:</strong> ${desc}</li>
+    //       <li><strong>Status:</strong> Being Processed</li>
+    //       <li><strong>Priority:</strong> High</li>
+    //       ${imageUrls && imageUrls.length > 0 ? `
+    //         <p><strong>Photos:</strong></p>
+    //         <ul>
+    //           ${imageUrls.map(url => `<li><a href="${url}" target="_blank">View Image</a></li>`).join('')}
+    //         </ul>
+    //       ` : ''}
+    //     </ul>
+    //     <p>Regards,<br/>Team SpareCare</p>`
+    // };
 
     transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
