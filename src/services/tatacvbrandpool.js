@@ -3,6 +3,7 @@ import fs from 'fs';
 import { Parser } from 'json2csv';
 import path from 'path';
 // import { uploadFileToS3 } from './upload.js';
+import { zipCsvFile } from '../utils/.csvtoZipservice.js';
 import {getPool2} from '../db/db.js'
 import { PC_NM_Pool_Mailer } from '../models/PC NM Pool Mailer.js';
 
@@ -26,7 +27,7 @@ async function exportAndCheckSize() {
     const fileName = `TATA_GNR_${date}.csv`;
     const filePath = path.join(process.env.LOCAL_FOLDER, fileName);
     // const filePath = path.join('C:/Users/vishu/VishuScs/S3', fileName);
-
+    
 
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
@@ -35,20 +36,28 @@ async function exportAndCheckSize() {
 
     fs.writeFileSync(filePath, csv);
     console.log("File extracted Done");
+
+    const csvPath = filePath;
+    const outputZipPath = path.join(process.env.LOCAL_FOLDER, `TATA_GNR_${date}.zip`);
+
+   await zipCsvFile(csvPath, outputZipPath)
+  .then(() => console.log('📦 CSV zipped successfully!'))
+  .catch(err => console.error('❌ Failed to zip CSV:', err));
     
+console.log(outputZipPath);
 
-    const stats = fs.statSync(filePath);
-    const sizeMB = stats.size / (1024 * 1024);
+    // const stats = fs.statSync(filePath);
+    // const sizeMB = stats.size / (1024 * 1024);
 
-    if (sizeMB > 250) {
-      fs.unlinkSync(filePath);
-      return { success: false, message: 'File exceeds 250MB limit. Skipped.' };
-    }
+    // if (sizeMB > 250) {
+    //   fs.unlinkSync(filePath);
+    //   return { success: false, message: 'File exceeds 250MB limit. Skipped.' };
+    // }
 
 return {
   success: true,
   message: 'Exported successfully',
-  filePath,
+  outputZipPath,
   s3Key: `exports/${fileName}` //  optional folder structure in S3
 };
 

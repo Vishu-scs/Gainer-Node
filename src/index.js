@@ -9,6 +9,12 @@ connectDB()
     app.listen(PORT,()=>{
         console.log(`Server is runnning at PORT: ${PORT}`)
     })
+    // TATA PVBU Brand Pool Scheduler 
+    // ✅ Schedule it to run every day at 8:00 AM
+    // cron.schedule('32 14 * * *', () => {
+    //   console.log(`⏰ Running scheduled job at ${new Date().toLocaleString()}`);
+    //   init();
+    // });
 })
 .catch((err)=>{
     console.log(" connection failed",err);
@@ -17,9 +23,3 @@ connectDB()
 
 // setTimeout(() => init(), 3000)
 
-// TATA PVBU Brand Pool Scheduler 
-// ✅ Schedule it to run every day at 8:00 AM
-    cron.schedule('0 8 * * *', () => {
-      console.log(`⏰ Running scheduled job at ${new Date().toLocaleString()}`);
-      init();
-    });

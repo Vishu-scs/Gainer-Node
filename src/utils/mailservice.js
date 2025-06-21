@@ -16,7 +16,7 @@ const tatacvBrandPoolMail = (date,url) => ({
   from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
   // to: 'manish.sharma@sparecare.in,hanish.khattar@sparecare.in',
   to: 'vishu.bansal@sparecare.in',
-  cc: 'scope@sparecare.in',
+  // cc: 'scope@sparecare.in',
   subject: `Tata PCBU Brand Pool Stock for ${date}`,
   html: `
     <p>Hi Team</p>
