@@ -14,13 +14,27 @@ const transporter = nodemailer.createTransport({
 
 const tatacvBrandPoolMail = (date,url) => ({
   from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
-  // to: 'manish.sharma@sparecare.in,hanish.khattar@sparecare.in',
+  // to: 'Chandan.Anand@tatamotors.com,vorsupport_pne@tatamotors.com',
   to: 'vishu.bansal@sparecare.in',
-  // cc: 'scope@sparecare.in',
+  //  cc: 'sandeep.avhad@tatamotors.com,hanish.khattar@sparecare.in',
+  //  bcc:'scope@sparecare.in,vishu.bansal@sparecare.in',
   subject: `Tata PCBU Brand Pool Stock for ${date}`,
   html: `
     <p>Hi Team</p>
    <p>Kindly find below the <strong><a href="${url}" target="_blank">Link</a></strong> to download the latest Non Moving Pool Stock of Tata PCBU brand dealers in Gainer.</p>
+   <p>Regards,<br/>Team SpareCare</p>`
+});
+
+const Honda4WBrandPoolMail = (date,url) => ({
+  from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
+  // to : ' ssgupta@honda.co.in,psohal@honda.co.in',
+  // cc : ' hanish.khattar@sparecare.in,manish.sharma@sparecare.in,gainer.exec8@sparecare.in',
+  to: 'vishu.bansal@sparecare.in',
+  // bcc:'scope@sparecare.in,vishu.bansal@sparecare.in',
+  subject: `Honda 4W Brand Pool Stock for ${date}`,
+  html: `
+    <p>Hi Team</p>
+   <p>Kindly find below the <strong><a href="${url}" target="_blank">Link</a></strong> to download the latest Non Moving Pool Stock of Honda 4W brand dealers in Gainer.</p>
    <p>Regards,<br/>Team SpareCare</p>`
 });
 
@@ -54,4 +68,4 @@ const helpandsupportMail = (useremail,TicketID,Service,issue,formattedDate,usern
         </ul>
         <p>Regards,<br/>Team SpareCare</p>`
 })
-export {transporter,tatacvBrandPoolMail,helpandsupportMail}
+export {transporter,tatacvBrandPoolMail,helpandsupportMail,Honda4WBrandPoolMail}
