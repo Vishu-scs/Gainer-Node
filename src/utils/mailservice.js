@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 
 const tatacvBrandPoolMail = (date,url) => ({
   from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
-  // to: 'Chandan.Anand@tatamotors.com,vorsupport_pne@tatamotors.com',
+  // to: 'Chandan.Anand@tatamotors.com,vorsupport_pne@tatamotors.com,abhinaba.sahu@tatamotors.com,Anurag.Chatterjee@tatamotors.com,singh.arvind@tatamotors.com,Ashwani.Anand@tatamotors.com,chetan.garg@tatamotors.com,haribaskar.md@tatamotors.com,pritesh.mishra@tatamotors.com,rajesh.roshan@tatamotors.com,rishi.ranjan@tatamotors.com,sandeep.kapoor@tatamotors.com,santanu.das@tatamotors.com,s.bahuleyan@tatamotors.com,Shreshth.AGARWAL@tatamotors.com,tamal.saha@tatamotors.com,vikas.kothari@tatamotors.com,vikash.jha@tatamotors.com,GBB820982@tatamotors.com',
   to: 'vishu.bansal@sparecare.in',
   //  cc: 'sandeep.avhad@tatamotors.com,hanish.khattar@sparecare.in',
   //  bcc:'scope@sparecare.in,vishu.bansal@sparecare.in',
