@@ -27,7 +27,7 @@ const tatacvBrandPoolMail = (date,url) => ({
 
 const Honda4WBrandPoolMail = (date,url) => ({
   from: `"Gainer AutoMailer" <${process.env.EMAILID}>`,
-  // to : ' ssgupta@honda.co.in,psohal@honda.co.in',
+  // to : ' ssgupta@honda.co.in,psohal@honda.co.in,scvijay@honda.co.in,ngoud@hondacarindia.com,djain@honda.co.in',
   // cc : ' hanish.khattar@sparecare.in,manish.sharma@sparecare.in,gainer.exec8@sparecare.in',
   to: 'vishu.bansal@sparecare.in',
   // bcc:'scope@sparecare.in,vishu.bansal@sparecare.in',
